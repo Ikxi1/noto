@@ -6,7 +6,7 @@
 
 
 struct link_list{
-	// void *previous;
+	void *previous;
 	struct link_list *next;
 	char line[];
 };
@@ -54,21 +54,16 @@ int main(const int argc, char **argv) {
 		if (line_length > 200) {printf("Crossed the line length limit at line %d.", line_counter); return 2;}
 
 		struct link_list *next = calloc(1, sizeof(struct link_list) + line_length);
-
 		memcpy(next->line, token_buffer, line_length);
-
 		previous->next = next;
-
+		next->previous = previous;
 		previous = next;
-
 		token_buffer += line_length;
 	}
+	moommap();
 
 	print_lines(head);
 
 	free_memory(head);
-
-	moommap(token_buffer);
-
 	return 0;
 }
