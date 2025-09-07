@@ -5,24 +5,24 @@
 #include <unistd.h>
 
 
-struct double_link_list{
+struct link_list{
 	// void *previous;
-	struct double_link_list *next;
+	struct link_list *next;
 	char line[];
 };
 
-void free_memory(struct double_link_list *head) {
-	struct double_link_list *next = head;
+void free_memory(struct link_list *head) {
+	struct link_list *next = head;
 
 	while (next->next != NULL) {
-		struct double_link_list *now = next;
+		struct link_list *now = next;
 		next = next->next;
 		free(now);
 	}
 }
 
-void print_lines(struct double_link_list *head) {
-	struct double_link_list *next = head;
+void print_lines(struct link_list *head) {
+	struct link_list *next = head;
 
 	while (next->next != NULL) {
 		printf(next->line);
@@ -38,8 +38,8 @@ int main(const int argc, char **argv) {
 
 	size_t line_length = strlen_asm(token_buffer);
 	if (line_length > 200) {printf("Crossed the line length limit at line 0."); return 2;}
-	struct double_link_list *previous = calloc(1, sizeof(struct double_link_list) + line_length);
-	struct double_link_list *head = previous;
+	struct link_list *previous = calloc(1, sizeof(struct link_list) + line_length);
+	struct link_list *head = previous;
 	memcpy(previous->line, token_buffer, line_length);
 	token_buffer += line_length;
 
@@ -53,7 +53,7 @@ int main(const int argc, char **argv) {
 		line_length = strlen_asm(token_buffer); // add one for \0
 		if (line_length > 200) {printf("Crossed the line length limit at line %d.", line_counter); return 2;}
 
-		struct double_link_list *next = calloc(1, sizeof(struct double_link_list) + line_length);
+		struct link_list *next = calloc(1, sizeof(struct link_list) + line_length);
 
 		memcpy(next->line, token_buffer, line_length);
 
@@ -64,7 +64,7 @@ int main(const int argc, char **argv) {
 		token_buffer += line_length;
 	}
 
-	while (1) print_lines(head);
+	print_lines(head);
 
 	free_memory(head);
 
