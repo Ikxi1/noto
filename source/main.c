@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <ncurses.h>
 
 struct link_list{
@@ -31,7 +32,7 @@ void print_lines(struct link_list *head) {
 }
 
 int main(const int argc, char **argv) {
-	if (argc < 1) {printf("Provide a file name."); return 1;}
+	if (argc < 2) {printf("Provide a file name."); return 1;}
 	const char delimiters1 = 0;
 	const char delimiters2 = 10;
 	char *token_buffer = get_pokke_buffer(argv[1], &delimiters1, &delimiters2);
@@ -40,20 +41,24 @@ int main(const int argc, char **argv) {
 	if (line_length > 200) {printf("Crossed the line length limit at line 0."); return 2;}
 	struct link_list *previous = calloc(1, sizeof(struct link_list) + line_length);
 	struct link_list *head = previous;
+	struct link_list *next;
 	memcpy(previous->line, token_buffer, line_length);
 	token_buffer += line_length;
 
+	int line_counter = 1;
 	while (*token_buffer != '\0') {
-		static int line_counter = 1;
 		line_counter++;
 		if (*token_buffer == 10) {
 			// handle new line
-			line_counter--; // otherwise newlines get detected as their own individual line
+			if (*(token_buffer+2) != 10) {
+				line_counter--;
+				if (*(token_buffer+2) == 0) line_counter++; // handle EOF
+			}
 		}
 		line_length = strlen_asm(token_buffer); // add one for \0
 		if (line_length > 200) {printf("Crossed the line length limit at line %d.", line_counter); return 2;}
 
-		struct link_list *next = calloc(1, sizeof(struct link_list) + line_length);
+		next = calloc(1, sizeof(struct link_list) + line_length);
 		memcpy(next->line, token_buffer, line_length);
 		previous->next = next;
 		next->previous = previous;
@@ -62,8 +67,21 @@ int main(const int argc, char **argv) {
 	}
 	moommap();
 
-	print_lines(head);
+	uint16_t row, col; // store number of rows and columns of the terminal
+	initscr();
+	getmaxyx(stdscr, row, col); // get rows and columns
+	next = head;
 
+	//while (1) {
+		for (int i = 0; i < row; ++i) {
+			mvprintw(i, 0, "%s", next->line);
+			next = next->next;
+		}
+		refresh();
+	//}
+
+	getch();
+	endwin();
 	free_memory(head);
 	return 0;
 }

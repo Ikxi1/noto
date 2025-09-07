@@ -25,6 +25,6 @@ done
 obj_files=$(find . -type f -name '*.o')
 
 echo "Linking -> $OUT"
-gcc -g -O0 -no-pie -o ../"$OUT" $obj_files
+gcc -g -O0 -no-pie -o ../"$OUT" $obj_files -lncurses
 
 cd ..
