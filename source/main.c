@@ -71,7 +71,7 @@ int main(const int argc, char **argv) {
 	keypad(stdscr, TRUE);
 	nonl(); // no new line, Enter key is handled differently
 
-	#define ctrl(x)  ((x) & 0x1f)
+	#define ctrl(x)  ((x) & 0x1f) // macro to get value for Ctrl + <key>
 
 	// printf("%d %d", row, col);
 
