@@ -1,4 +1,3 @@
-// test change
 #include <pokkenizer.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,8 +79,9 @@ int main(const int argc, char **argv) {
 
 	DoubleLinkList *top;
 	top = head;
+	uint8_t running = 1;
 
-	while ((key = wgetch(stdscr)) != 17) {
+	while (running == 1) {
 		getmaxyx(stdscr, row, col); // get rows and columns, make it resizable
 		next = top;
 		for (int i = 0; i < row-2;) {
@@ -90,12 +90,19 @@ int main(const int argc, char **argv) {
 			if (next == 0) break;
 			++i;
 		}
-		// key = wgetch(stdscr);
+
+		key = wgetch(stdscr);
 		mvprintw(row-1, 0, "                                ");
 		switch (key) {
 			case KEY_ENTER:
 				mvprintw(row-1, 0, "key: %d", key);
 				break;
+			case ctrl('c'):
+				mvprintw(row-1, 0, "key: ctrl c");
+				break;
+			case ctrl('q'):
+				printf("Goodbye\n");
+				running = 0;
 			case ctrl('j'):
 				mvprintw(row-1, 0, "key: ctrl j");
 				break;
@@ -103,11 +110,12 @@ int main(const int argc, char **argv) {
 				mvprintw(row-1, 0, "key: ctrl f");
 				break;
 			case 258:
-
+				if (top->next != 0) top = top->next; // check if at end of file
 			default:
 				mvprintw(row-1, 0, "key: %d", key);
 				break;
 		}
+
 		refresh();
 	}
 
