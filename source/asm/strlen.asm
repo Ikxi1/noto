@@ -6,11 +6,10 @@ strlen_asm:
 	; return = rax strlen
 
 	xor rax, rax
-    xor rcx, rcx
-.l1:
-	inc rcx
-	scasb
-	jnz .l1
+	mov rcx, -1
+	cld
+	repne scasb
+	not rcx
 	sub rdi, rcx
 	mov rax, rcx
 

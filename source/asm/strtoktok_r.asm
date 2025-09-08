@@ -55,6 +55,7 @@ strtoktok_r:
 .l5:
 	mov rsi, qword [.delimiters]
 	call strcspn
+	add rax, 1 ; for the following newline
 	mov rdi, qword [.token_buffer]
 	mov r8, qword [.string_position]
 	add rdi, qword [r8]
