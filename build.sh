@@ -1,8 +1,6 @@
 #!/bin/sh
 set -e
 
-./clean.sh
-
 cd source
 
 OUT="noto"
@@ -25,6 +23,6 @@ done
 obj_files=$(find . -type f -name '*.o')
 
 echo "Linking -> $OUT"
-gcc -g -O0 -no-pie -o ../"$OUT" $obj_files -lncurses
+gcc -std=c99 -g -O0 -no-pie -o ../"$OUT" $obj_files -lncurses
 
 cd ..
