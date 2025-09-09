@@ -76,7 +76,8 @@ int main(const int argc, char **argv) {
 
     // SETTING UP NCURSES
     uint16_t row, col; // store number of rows and columns of the terminal
-    uint8_t current_col = 0; // for left-right scrolling
+    uint8_t current_col = 0; // or left-right scrolling
+    curses_trace(1); // trace log
     initscr();
     raw();
     noecho();
@@ -87,7 +88,7 @@ int main(const int argc, char **argv) {
     int key;
     DoubleLinkList *top;
     top = head;
-    Cursor cursor = {top, 0, 0, 0};
+    Cursor cursor = {top, 0, current_col, current_col};
     uint8_t running = 1;
 
     // PROGRAM LOOP
@@ -100,17 +101,18 @@ int main(const int argc, char **argv) {
             if (next->line_length >= current_col)
                 mvprintw(i, 0, "%s", next->line+current_col);
             else mvprintw(i, 0, "%s", next->line+next->line_length);
-//            if (next == cursor.text_row) { // cursor printing
-//                for (int j = 0; j < cursor.text_col;) {
-//                    mvprintw(i, j, "%s", next->line[j]);
-//                }
-//                attron(A_STANDOUT);
-//                mvprintw(i, cursor.text_col, "%s", next->line[cursor.text_col]);
-//                attroff(A_STANDOUT);
-//                for (int j = cursor.text_col+1; j < next->line_length;) {
-//                    mvprintw(i, j, "%s", next->line[j]);
-//                }
-//            }
+            if (next == cursor.text_row) { // cursor printing
+                // for (int j = 0; j < next->line_length-1;) { // clear cursor line
+                //     mvprintw(i, j++, " ");
+                // }
+                for (int j = 0; j < cursor.screen_col; ++j) {
+                    mvprintw(i, j, "%c", next->line[j]);
+                }
+                mvaddch(i, cursor.screen_col, A_STANDOUT | next->line[cursor.screen_col]);
+                for (int j = cursor.screen_col+1; j < next->line_length; ++j) {
+                    mvprintw(i, j, "%c", next->line[j]);
+                }
+            }
             next = next->next;
             if (next == 0) break;
             ++i;
@@ -139,19 +141,43 @@ int main(const int argc, char **argv) {
                         cursor.text_row = cursor.text_row->next;
                     }
                     else mvprintw(row-1, 0, "arrow_down what just happened");
-
                     break;
                 }
                 mvprintw(row-1, 0, "arrow_down reached end of file");
                 break;
 
             case 259: // arrow_up
-                if (top->previous != 0) { // check BOF
-                    top = top->previous;
+                if (cursor.text_row->previous != 0) { // check BOF
                     mvprintw(row-1, 0, "arrow_up");
+                    if (cursor.screen_row != 0) {
+                        cursor.text_row = cursor.text_row->previous;
+                        cursor.screen_row--;
+                    }
+                    else if (top->previous != 0) {
+                        top = top->previous;
+                        cursor.text_row = cursor.text_row->previous;
+                    }
+                    else mvprintw(row-1, 0, "arrow_up what just happened");
                     break;
                 }
                 mvprintw(row-1, 0, "arrow_up reached beginning of file");
+                break;
+
+            case 260: // arrow_left
+                if (cursor.text_col > 0) {
+                    mvprintw(row-1, 0, "arrow_left");
+                    cursor.text_col--;
+                    if (cursor.screen_col > 0) {
+                        cursor.screen_col--;
+                    }
+                    else if (current_col > 0) {
+                        current_col--;
+                    }
+                }
+                mvprintw(row-1, 0, "arrow_left reached beginning of line");
+                break;
+
+            case 261: // arrow_right
                 break;
 
             case 338: // page down
@@ -173,11 +199,11 @@ int main(const int argc, char **argv) {
                 break;
 
             case 555: // alt left_arrow
-                mvprintw(row-1, 0, "key: %d", key);
+                mvprintw(row-1, 0, "alt left_arrow WILL LEAD TO UNDEFINED BEHAVIOUR");
                 if (current_col > 0) current_col--; break;
 
             case 570: // alt right_arrow
-                mvprintw(row-1, 0, "key: %d", key);
+                mvprintw(row-1, 0, "alt right_arrow WILL LEAD TO UNDEFINED BEHAVIOUR");
                 if (current_col < 200) current_col++; break;
 
             case ctrl('c'): // unhandled
