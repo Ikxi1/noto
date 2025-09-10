@@ -77,8 +77,8 @@ int main(const int argc, char **argv) {
     // SETTING UP NCURSES
     uint16_t row, col; // store number of rows and columns of the terminal
     uint8_t current_col = 0; // or left-right scrolling
-    curs_set(0); // trying to disable ncurses cursor, but doesn't work
     initscr();
+    curs_set(0); // trying to disable ncurses cursor, but doesn't work
     raw();
     noecho();
     keypad(stdscr, TRUE);
