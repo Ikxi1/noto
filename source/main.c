@@ -97,14 +97,11 @@ int main(const int argc, char **argv) {
         getmaxyx(stdscr, row, col); // get rows and columns, make it resizable
 
         next = top;
-        for (int i = 0; i < row-2;) { // printing the lines
+        for (int i = 0; i < row-1;) { // printing the lines
             if (next->line_length >= current_col)
                 mvprintw(i, 0, "%s", next->line+current_col);
             else mvprintw(i, 0, "%s", next->line+next->line_length);
             if (next == cursor.text_row) { // cursor printing
-                // for (int j = 0; j < next->line_length-1;) { // clear cursor line
-                //     mvprintw(i, j++, " ");
-                // }
                 for (int j = 0; j < cursor.screen_col; ++j) {
                     mvprintw(i, j, "%c", next->line[j]);
                 }
@@ -181,7 +178,7 @@ int main(const int argc, char **argv) {
                 break;
 
             case 338: // page down
-                mvprintw(row-1, 0, "key: %d", key);
+                mvprintw(row-1, 0, "page_down WILL LEAD TO UNDEFINED BEHAVIOUR");
                 for (int i = 0; i < row -3;) {
                     if (top->next != 0) top = top->next;
                     else if (top->next == 0) break;
@@ -190,7 +187,7 @@ int main(const int argc, char **argv) {
                 break;
 
             case 339: // page up
-                mvprintw(row-1, 0, "key: %d", key);
+                mvprintw(row-1, 0, "page_up WILL LEAD TO UNDEFINED BEHAVIOUR"););
                 for (int i = 0; i < row -3;) {
                     if (top->previous != 0) top = top->previous;
                     else if (top->previous == 0) break;
