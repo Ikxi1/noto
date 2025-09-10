@@ -3,12 +3,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+
 #include <ncurses.h>
 
 #include <pokkenizer.h>
 #include <extras.h>
-
-
 
 
 void free_memory(DoubleLinkList *head) {
@@ -95,21 +94,23 @@ int main(const int argc, char **argv) {
 
         next = top;
         for (int i = 0; i < row-1;) { // printing the lines
-            if (next->line_length >= current_col)
-                mvprintw(i, 0, "%s", next->line+current_col);
-            else mvprintw(i, 0, "%s", next->line+next->line_length);
+            if (next->line_length >= current_col) // is scrolled to the right?
+                mvprintw(i, 0, "%s", next->line + current_col);
+            else mvprintw(i, 0, "%s", next->line + next->line_length);
             if (next == cursor.text_row) { // cursor printing
+                // cursor in a line, including \n char
                 if (cursor.screen_col < cursor.text_row->line_length) {
                     for (int j = 0; j < cursor.screen_col; ++j) {
                         mvprintw(i, j, "%c", next->line[j]);
                     }
                     char c = next->line[cursor.screen_col];
                     if (c != 10) mvaddch(i, cursor.screen_col, A_STANDOUT | c);
-                    else mvaddch(i, cursor.screen_col, A_STANDOUT | 32);
+                    else         mvaddch(i, cursor.screen_col, A_STANDOUT | 32);
                     for (int j = cursor.screen_col+1; j < next->line_length; ++j) {
                         mvprintw(i, j, "%c", next->line[j]);
                     }
                 }
+                // cursor jumping to shorter line, adjust cursor pos
                 else {
                     mvprintw(i, 0, "%s", next->line);
                     mvaddch(i, next->line_length-1, A_STANDOUT | 32);
@@ -214,12 +215,24 @@ int main(const int argc, char **argv) {
                 break;
 
             case 555: // alt left_arrow
-                mvprintw(row-1, 0, "alt left_arrow WILL LEAD TO UNDEFINED BEHAVIOUR");
-                if (current_col > 0) current_col--; break;
+                mvprintw(row-1, 0, "alt left_arrow");
+                if (current_col > 0) {
+                    current_col--;
+                    cursor.text_col--;
+                    break;
+                }
+                mvprintw(row-1, 0 ,"alt left_arrow reached beginning of line");
+                break;
 
             case 570: // alt right_arrow
-                mvprintw(row-1, 0, "alt right_arrow WILL LEAD TO UNDEFINED BEHAVIOUR");
-                if (current_col < 200) current_col++; break;
+                mvprintw(row-1, 0, "alt right_arrow");
+                if (current_col < 200) {
+                    current_col++;
+                    cursor.text_col++;
+                    break;
+                }
+                mvprintw(row-1, 0 ,"alt right_arrow reached end of line");
+                break;
 
             case ctrl('c'): // unhandled
                 mvprintw(row-1, 0, "key: ctrl c");
