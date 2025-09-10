@@ -110,11 +110,11 @@ pokkenize_loop:
 
     ; when used inside another program
 end:
-	mov rax, 11
-	mov rdi, qword [file_buffer_pointer]
-	mov rsi, qword [file_size]
+    mov rax, 11
+    mov rdi, qword [file_buffer_pointer]
+    mov rsi, qword [file_size]
     add rsi, 1 ; \0
-	syscall
+    syscall
     mov rax, [pokke_buffer_pointer]
     leave
     ret

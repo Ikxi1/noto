@@ -1,4 +1,3 @@
-#include <pokkenizer.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,21 +5,10 @@
 #include <stdint.h>
 #include <ncurses.h>
 
-
-typedef struct double_link_list{
-    struct double_link_list *previous;
-    struct double_link_list *next;
-    uint8_t line_length;
-    char line[];
-} DoubleLinkList;
+#include <pokkenizer.h>
+#include <extras.h>
 
 
-typedef struct cursor{
-    DoubleLinkList *text_row;
-    uint8_t text_col;
-    uint8_t screen_row;
-    uint8_t screen_col;
-} Cursor;
 
 
 void free_memory(DoubleLinkList *head) {
@@ -43,9 +31,12 @@ int main(const int argc, char **argv) {
     */
     char *token_buffer = get_pokke_buffer(argv[1], "", "\n");
     size_t line_length = strlen_asm(token_buffer);
-    if (line_length > 200) {printf("Crossed the line length limit at line 0."); return 2;}
+    if (line_length > 200) {
+        printf("Crossed the line length limit at line 0.");
+        return 2;
+    }
     DoubleLinkList *head = calloc(1, sizeof(DoubleLinkList) + line_length);
-    head->line_length = line_length;
+    head->line_length = line_length - 1; // save without the null-terminator
     DoubleLinkList *previous = head;
     DoubleLinkList *next;
     memcpy(previous->line, token_buffer, line_length);
@@ -62,11 +53,14 @@ int main(const int argc, char **argv) {
             }
         }
         line_length = strlen_asm(token_buffer); // add one for \0
-        if (line_length > 200) {printf("Crossed the line length limit at line %d.", line_counter); return 2;}
+        if (line_length > 200) {
+            printf("Crossed the line length limit at line %d.", line_counter);
+            return 2;
+        }
 
         next = calloc(1, sizeof(DoubleLinkList) + line_length);
         memcpy(next->line, token_buffer, line_length);
-        next->line_length = line_length;
+        next->line_length = line_length - 1; // save without the null-terminator
         previous->next = next;
         next->previous = previous;
         previous = next;
@@ -76,7 +70,10 @@ int main(const int argc, char **argv) {
 
     // SETTING UP NCURSES
     uint16_t row, col; // store number of rows and columns of the terminal
-    uint8_t current_col = 0; // or left-right scrolling
+    uint8_t current_col = 0; // for left-right scrolling
+    // for adjusting cursor position when moving to a short line
+    // unused for now
+    // uint8_t col_max = 0;
     initscr();
     curs_set(0); // trying to disable ncurses cursor, but doesn't work
     raw();
@@ -88,7 +85,7 @@ int main(const int argc, char **argv) {
     int key;
     DoubleLinkList *top;
     top = head;
-    Cursor cursor = {top, 0, current_col, current_col};
+    Cursor cursor = {top, 0, 0, 0};
     uint8_t running = 1;
 
     // PROGRAM LOOP
@@ -102,12 +99,22 @@ int main(const int argc, char **argv) {
                 mvprintw(i, 0, "%s", next->line+current_col);
             else mvprintw(i, 0, "%s", next->line+next->line_length);
             if (next == cursor.text_row) { // cursor printing
-                for (int j = 0; j < cursor.screen_col; ++j) {
-                    mvprintw(i, j, "%c", next->line[j]);
+                if (cursor.screen_col < cursor.text_row->line_length) {
+                    for (int j = 0; j < cursor.screen_col; ++j) {
+                        mvprintw(i, j, "%c", next->line[j]);
+                    }
+                    char c = next->line[cursor.screen_col];
+                    if (c != 10) mvaddch(i, cursor.screen_col, A_STANDOUT | c);
+                    else mvaddch(i, cursor.screen_col, A_STANDOUT | 32);
+                    for (int j = cursor.screen_col+1; j < next->line_length; ++j) {
+                        mvprintw(i, j, "%c", next->line[j]);
+                    }
                 }
-                mvaddch(i, cursor.screen_col, A_STANDOUT | next->line[cursor.screen_col]);
-                for (int j = cursor.screen_col+1; j < next->line_length; ++j) {
-                    mvprintw(i, j, "%c", next->line[j]);
+                else {
+                    mvprintw(i, 0, "%s", next->line);
+                    mvaddch(i, next->line_length-1, A_STANDOUT | 32);
+                    cursor.text_col = line_length-1;
+                    cursor.screen_col = line_length-1;
                 }
             }
             next = next->next;
@@ -138,6 +145,8 @@ int main(const int argc, char **argv) {
                         cursor.text_row = cursor.text_row->next;
                     }
                     else mvprintw(row-1, 0, "arrow_down what just happened");
+                    // if (cursor.text_col >= cursor.text_row->line_length)
+                    //     move_cursor_eol(cursor);
                     break;
                 }
                 mvprintw(row-1, 0, "arrow_down reached end of file");
@@ -155,6 +164,8 @@ int main(const int argc, char **argv) {
                         cursor.text_row = cursor.text_row->previous;
                     }
                     else mvprintw(row-1, 0, "arrow_up what just happened");
+                    // if (cursor.text_col >= cursor.text_row->line_length)
+                    //     move_cursor_eol(cursor);
                     break;
                 }
                 mvprintw(row-1, 0, "arrow_up reached beginning of file");
@@ -164,17 +175,24 @@ int main(const int argc, char **argv) {
                 if (cursor.text_col > 0) {
                     mvprintw(row-1, 0, "arrow_left");
                     cursor.text_col--;
-                    if (cursor.screen_col > 0) {
-                        cursor.screen_col--;
-                    }
-                    else if (current_col > 0) {
-                        current_col--;
-                    }
+                    // col_max--;
+                    if (cursor.screen_col > 0) cursor.screen_col--;
+                    else current_col--;
+                    break;
                 }
                 mvprintw(row-1, 0, "arrow_left reached beginning of line");
                 break;
 
             case 261: // arrow_right
+                if (cursor.text_col < cursor.text_row->line_length - 1) { // -1 to account for line_length 1 starting index 0, it's weird
+                    mvprintw(row-1, 0, "arrow_right");
+                    cursor.text_col++;
+                    // col_max++;
+                    if (cursor.screen_col >= col) current_col++;
+                    else cursor.screen_col++;
+                    break;
+                }
+                mvprintw(row-1, 0, "arrow_right reached end of line");
                 break;
 
             case 338: // page down
@@ -187,7 +205,7 @@ int main(const int argc, char **argv) {
                 break;
 
             case 339: // page up
-                mvprintw(row-1, 0, "page_up WILL LEAD TO UNDEFINED BEHAVIOUR"););
+                mvprintw(row-1, 0, "page_up WILL LEAD TO UNDEFINED BEHAVIOUR");
                 for (int i = 0; i < row -3;) {
                     if (top->previous != 0) top = top->previous;
                     else if (top->previous == 0) break;
