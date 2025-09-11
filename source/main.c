@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <signal.h>
 
 #include <ncurses.h>
 
@@ -34,7 +36,8 @@ int main(const int argc, char **argv) {
         printf("Crossed the line length limit at line 0.");
         return 2;
     }
-    DoubleLinkList *head = calloc(1, sizeof(DoubleLinkList) + line_length);
+    // currently copying the null-terminator into the strings, necessary?
+    DoubleLinkList *head = calloc(1, sizeof(DoubleLinkList) + 200);
     head->line_length = line_length - 1; // save without the null-terminator
     DoubleLinkList *previous = head;
     DoubleLinkList *next;
@@ -51,13 +54,13 @@ int main(const int argc, char **argv) {
                 if (*(token_buffer+2) == 0) line_counter++; // handle EOF
             }
         }
-        line_length = strlen_asm(token_buffer); // add one for \0
+        line_length = strlen_asm(token_buffer);
         if (line_length > 200) {
             printf("Crossed the line length limit at line %d.", line_counter);
             return 2;
         }
 
-        next = calloc(1, sizeof(DoubleLinkList) + line_length);
+        next = calloc(1, sizeof(DoubleLinkList) + 200);
         memcpy(next->line, token_buffer, line_length);
         next->line_length = line_length - 1; // save without the null-terminator
         previous->next = next;
@@ -97,25 +100,28 @@ int main(const int argc, char **argv) {
             if (next->line_length >= current_col) // is scrolled to the right?
                 mvprintw(i, 0, "%s", next->line + current_col);
             else mvprintw(i, 0, "%s", next->line + next->line_length);
+
             if (next == cursor.text_row) { // cursor printing
                 // cursor in a line, including \n char
-                if (cursor.screen_col < cursor.text_row->line_length) {
-                    for (int j = 0; j < cursor.screen_col; ++j) {
+                if (cursor.text_col < cursor.text_row->line_length) {
+                    for (int j = current_col; j < cursor.text_col; ++j) {
                         mvprintw(i, j, "%c", next->line[j]);
                     }
-                    char c = next->line[cursor.screen_col];
-                    if (c != 10) mvaddch(i, cursor.screen_col, A_STANDOUT | c);
-                    else         mvaddch(i, cursor.screen_col, A_STANDOUT | 32);
-                    for (int j = cursor.screen_col+1; j < next->line_length; ++j) {
+                    char c = next->line[cursor.text_col];
+                    if (c != 10) mvaddch(i, cursor.text_col, A_STANDOUT | c);
+                    else         mvaddch(i, cursor.text_col, A_STANDOUT | 32);
+                    for (int j = cursor.text_col+1; j < next->line_length; ++j) {
                         mvprintw(i, j, "%c", next->line[j]);
                     }
                 }
                 // cursor jumping to shorter line, adjust cursor pos
                 else {
+                    // raise(SIGTRAP);
                     mvprintw(i, 0, "%s", next->line);
-                    mvaddch(i, next->line_length-1, A_STANDOUT | 32);
-                    cursor.text_col = line_length-1;
-                    cursor.screen_col = line_length-1;
+                    line_length = next->line_length-1;
+                    mvaddch(i, line_length, A_STANDOUT | 32);
+                    cursor.text_col = line_length;
+                    cursor.screen_col = line_length;
                 }
             }
             next = next->next;
@@ -214,6 +220,12 @@ int main(const int argc, char **argv) {
                 }
                 break;
 
+            case 262: // POS 1
+                break;
+
+            case 360: // END
+                break;
+
             case 555: // alt left_arrow
                 mvprintw(row-1, 0, "alt left_arrow");
                 if (current_col > 0) {
@@ -235,7 +247,7 @@ int main(const int argc, char **argv) {
                 break;
 
             case ctrl('c'): // unhandled
-                mvprintw(row-1, 0, "key: ctrl c");
+                mvprintw(row-1, 0, "ctrl c");
                 break;
 
             case ctrl('j'): // unhandled
@@ -251,11 +263,26 @@ int main(const int argc, char **argv) {
                 break;
 
             default:
-                mvprintw(row-1, 0, "key: %d", key);
+                char c = scancode_lut[key];
+                if (c != 0) {
+                    // add characters to line
+                    char buf[1];
+                    for (int i = cursor.text_col; i >= cursor.text_row->line_length;) {
+                        //if (i+1 >= 200) {
+                        //    mvprintw(row-1, 0, "reached line length limit");
+                        //    break;
+                        //}
+                        //buf[0] = cursor.text_row->line[i+1];
+                        cursor.text_row->line[i+1] = cursor.text_row->line[i];
+                        i++;
+                    }
+                    cursor.text_row->line[cursor.text_col] = c;
+                    cursor.text_row->line_length++;
+                    //mvaddnstr(row-1, 0, &c, 1);
+                }
+                else mvprintw(row-1, 0, "key: %d", key);
                 break;
         }
-
-
     }
 
     endwin();
