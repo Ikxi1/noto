@@ -266,13 +266,13 @@ int main(const int argc, char **argv) {
                 char c = scancode_lut[key];
                 if (c != 0) {
                     // add characters to line
-                    char buf[1];
+                    char buf = cursor.text_row->line[cursor.text_col+1];
                     for (int i = cursor.text_col; i >= cursor.text_row->line_length;) {
                         //if (i+1 >= 200) {
                         //    mvprintw(row-1, 0, "reached line length limit");
                         //    break;
                         //}
-                        //buf[0] = cursor.text_row->line[i+1];
+                        buf[0] = cursor.text_row->line[i+1];
                         cursor.text_row->line[i+1] = cursor.text_row->line[i];
                         i++;
                     }
