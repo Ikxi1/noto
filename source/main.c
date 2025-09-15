@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <signal.h>
 
+
+#define NCURSES_WIDECHAR 1
 #include <ncurses.h>
 
 #include <pokkenizer.h>
@@ -272,13 +274,13 @@ int main(const int argc, char **argv) {
                         //    mvprintw(row-1, 0, "reached line length limit");
                         //    break;
                         //}
-                        buf[0] = cursor.text_row->line[i+1];
+                        //buf[0] = cursor.text_row->line[i+1];
                         cursor.text_row->line[i+1] = cursor.text_row->line[i];
                         i++;
                     }
                     cursor.text_row->line[cursor.text_col] = c;
                     cursor.text_row->line_length++;
-                    //mvaddnstr(row-1, 0, &c, 1);
+                    mvaddnstr(row-1, 0, &c, 1);
                 }
                 else mvprintw(row-1, 0, "key: %d", key);
                 break;

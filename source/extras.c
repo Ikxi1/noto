@@ -1,6 +1,6 @@
 #include <extras.h>
 
-const char scancode_lut[] = {
+const uint32 scancode_lut[] = {
     0,0,0,0,0,0,0,0,0,0, // 0-9
     0,0,0,0,0,0,0,0,0,0, // 10-19
     0,0,0,0,0,0,0,0,0,0, // 20-29
