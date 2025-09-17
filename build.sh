@@ -17,12 +17,13 @@ done
 for src in $c_files; do
     obj="${src%.c}.o"
     echo "Compiling $src -> $obj"
-    gcc -g -O0 -c "$src" -I../include -o "$obj"
+    gcc -g -O0 -c "$src" -I../include -o "$obj" \
+    -finstrument-functions # for gf_profiling
 done
 
 obj_files=$(find . -type f -name '*.o')
 
 echo "Linking -> $OUT"
-gcc -std=c99 -g -O0 -no-pie -o ../"$OUT" $obj_files -lncurses
+gcc -std=c99 -g -O0 -no-pie -o ../"$OUT" $obj_files -lncursesw
 
 cd ..

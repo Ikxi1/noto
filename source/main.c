@@ -12,7 +12,7 @@
 
 #include <pokkenizer.h>
 #include <extras.h>
-
+//#include <gf_profiling.h>
 
 void free_memory(DoubleLinkList *head) {
     DoubleLinkList *next = head;
@@ -32,14 +32,14 @@ int main(const int argc, char **argv) {
     It splits after the delimiter.
     Tabs get converted to spaces.
     */
-    char *token_buffer = get_pokke_buffer(argv[1], "", "\n");
+    wchar_t *token_buffer = get_pokke_buffer(argv[1], "", "\n");
     size_t line_length = strlen_asm(token_buffer);
     if (line_length > 200) {
         printf("Crossed the line length limit at line 0.");
         return 2;
     }
     // currently copying the null-terminator into the strings, necessary?
-    DoubleLinkList *head = calloc(1, sizeof(DoubleLinkList) + 200);
+    DoubleLinkList *head = calloc(1, sizeof(DoubleLinkList) + 400); // 4 bytes per char, 100 line lenght
     head->line_length = line_length - 1; // save without the null-terminator
     DoubleLinkList *previous = head;
     DoubleLinkList *next;
@@ -73,24 +73,24 @@ int main(const int argc, char **argv) {
     moommap();
 
     // SETTING UP NCURSES
-    uint16_t row, col; // store number of rows and columns of the terminal
-    uint8_t current_col = 0; // for left-right scrolling
+    uint16 row, col; // store number of rows and columns of the terminal
+    uint8 current_col = 0; // for left-right scrolling
     // for adjusting cursor position when moving to a short line
     // unused for now
-    // uint8_t col_max = 0;
+    // uint8 col_max = 0;
     initscr();
-    curs_set(0); // trying to disable ncurses cursor, but doesn't work
+    curs_set(0);
     raw();
     noecho();
     keypad(stdscr, TRUE);
     nonl(); // no new line, Enter key is handled differently
     clear();
     #define ctrl(x)  ((x) & 0x1f) // macro to get value for Ctrl + <key>
-    int key;
+    int key = 0;
     DoubleLinkList *top;
     top = head;
     Cursor cursor = {top, 0, 0, 0};
-    uint8_t running = 1;
+    uint8 running = 1;
 
     // PROGRAM LOOP
     while (running == 1) {
@@ -265,10 +265,10 @@ int main(const int argc, char **argv) {
                 break;
 
             default:
-                char c = scancode_lut[key];
+                wchar_t c = scancode_lut[key];
                 if (c != 0) {
                     // add characters to line
-                    char buf = cursor.text_row->line[cursor.text_col+1];
+                    //char buf = cursor.text_row->line[cursor.text_col+1];
                     for (int i = cursor.text_col; i >= cursor.text_row->line_length;) {
                         //if (i+1 >= 200) {
                         //    mvprintw(row-1, 0, "reached line length limit");
@@ -280,7 +280,7 @@ int main(const int argc, char **argv) {
                     }
                     cursor.text_row->line[cursor.text_col] = c;
                     cursor.text_row->line_length++;
-                    mvaddnstr(row-1, 0, &c, 1);
+                    mvprintw(row-1, 0, "%lc", c);
                 }
                 else mvprintw(row-1, 0, "key: %d", key);
                 break;
