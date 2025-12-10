@@ -1,7 +1,7 @@
 #include <extras.h>
 
 
-const wchar_t scancode_lut[] = {
+const char scancode_lut[] = {
     0,0,0,0,0,0,0,0,0,0, // 0-9
     0,0,0,0,0,0,0,0,0,0, // 10-19
     0,0,0,0,0,0,0,0,0,0, // 20-29

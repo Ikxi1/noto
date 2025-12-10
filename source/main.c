@@ -1,3 +1,6 @@
+// ß
+// 0x0A at the end of every line after the file got read into memory
+// that \n should only be there when being read from the file and written back to it
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -12,6 +15,7 @@
 
 #include <pokkenizer.h>
 #include <extras.h>
+#include <locale.h>
 //#include <gf_profiling.h>
 
 void free_memory(DoubleLinkList *head) {
@@ -25,6 +29,7 @@ void free_memory(DoubleLinkList *head) {
 
 
 int main(const int argc, char **argv) {
+    setlocale(LC_ALL, "");
     // TOKENIZING THE FILE AND CREATE A DOUBLE LINKED LIST
     if (argc < 2) {printf("Provide a file name."); return 1;}
     /*
@@ -32,15 +37,15 @@ int main(const int argc, char **argv) {
     It splits after the delimiter.
     Tabs get converted to spaces.
     */
-    wchar_t *token_buffer = get_pokke_buffer(argv[1], "", "\n");
-    size_t line_length = strlen_asm(token_buffer);
+    char *token_buffer = get_pokke_buffer(argv[1], "", "\n");
+    size_t line_length = strlen_asm(token_buffer) - 2; // save without \0 and \n
     if (line_length > 200) {
         printf("Crossed the line length limit at line 0.");
         return 2;
     }
     // currently copying the null-terminator into the strings, necessary?
     DoubleLinkList *head = calloc(1, sizeof(DoubleLinkList) + 400); // 4 bytes per char, 100 line lenght
-    head->line_length = line_length - 1; // save without the null-terminator
+    head->line_length = line_length;
     DoubleLinkList *previous = head;
     DoubleLinkList *next;
     memcpy(previous->line, token_buffer, line_length);
@@ -59,6 +64,7 @@ int main(const int argc, char **argv) {
         line_length = strlen_asm(token_buffer);
         if (line_length > 200) {
             printf("Crossed the line length limit at line %d.", line_counter);
+            free_memory(head);
             return 2;
         }
 
@@ -265,7 +271,7 @@ int main(const int argc, char **argv) {
                 break;
 
             default:
-                wchar_t c = scancode_lut[key];
+                char c = scancode_lut[key];
                 if (c != 0) {
                     // add characters to line
                     //char buf = cursor.text_row->line[cursor.text_col+1];

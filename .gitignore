@@ -1,6 +1,6 @@
-.idea/
-cmake-build-debug/
-.vscode/
+**/.idea/**
+**/cmake-build-debug/**
+**/.vscode/**
 noto
 test.c
 test
