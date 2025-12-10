@@ -6,5 +6,4 @@ It uses a double linked list design.
 
 	No warranty.
 	Give credit (link this github repo for example).
-	Ask for commercial use.
 	Don't use it for evil.
