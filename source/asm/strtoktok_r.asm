@@ -17,7 +17,15 @@ strtoktok_r:
     mov rbp, rsp
     sub rsp, 16
 
+    xor r9, r9 ; honestly do not know why r9 is a problem cause it gets reset in .l2?
+    		   ; unless for some reason it isn't cause it jumps to .l4? ok, might be it
+
 .l1:
+    cmp rdi, 0
+    jne .l15
+    mov rax, 0
+    jmp .ret
+.l15:
     cmp byte [rdi], 0
     jne .l2
     mov rax, 0
@@ -48,6 +56,7 @@ strtoktok_r:
     mov [r8], qword r9
     mov [.string], qword rdi
 .l4:
+	mov qword rdi, [.string]
     cmp byte [rdi], 0
     jne .l5
     mov rax, 0

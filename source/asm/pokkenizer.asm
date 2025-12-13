@@ -57,7 +57,8 @@ allocate_file_buffer:
     mov rdx, 3
     mov r10, 0x22
     xor r9, r9
-    xor r8, r8
+;    xor r8, r8
+	mov r8, -1
     syscall
     test rax, rax
     js something_else
@@ -78,7 +79,7 @@ close_file:
     js something_else
 allocate_pokke_buffer:
     ; multiply file_size x2 for worst case scenario
-    shl rdx, 1
+    shl rdx, 2
     sub rdx, 1 ; i already added one extra byte for EOF, now it's doubled
     mov rsi, rdx
     mov rax, 9
@@ -86,13 +87,15 @@ allocate_pokke_buffer:
     mov rdx, 3
     mov r10, 0x22
     xor r9, r9
-    xor r8, r8
+;    xor r8, r8
+	mov r8, -1
     syscall
     test rax, rax
     js something_else
     mov [pokke_buffer_pointer], qword rax
 
 pokkenize:
+	mov qword [string_position], 0
     mov rdi, qword [file_buffer_pointer]
     mov rsi, qword [delimiter_pointer1]
     mov rdx, save_pointer1

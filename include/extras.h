@@ -1,7 +1,6 @@
 #ifndef EXTRAS_H
 #define EXTRAS_H
-#include <wchar.h>
-#include <stddef.h>
+#include <signal.h>
 #include <stdint.h>
 
 
@@ -21,8 +20,15 @@ typedef struct cursor{
 
 extern const char scancode_lut[];
 
+extern volatile sig_atomic_t running;
+
 // Move the cursor to the end of the line, when moving up or down
 // and the cursor is on now on a shorter line
 void move_cursor_eol(Cursor cursor);
+
+void handle_sigint(int sig);
+void handle_sigterm(int sig);
+
+void free_memory(DoubleLinkList *head);
 
 #endif

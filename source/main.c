@@ -1,35 +1,27 @@
-// ß
 // 0x0A at the end of every line after the file got read into memory
 // that \n should only be there when being read from the file and written back to it
+
+// free memory if some init fails
+
 #include <stdio.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdint.h>
 #include <signal.h>
 
-
-#define NCURSES_WIDECHAR 1
+// #define NCURSES_WIDECHAR 1
 #include <ncurses.h>
 
 #include <pokkenizer.h>
 #include <extras.h>
 #include <locale.h>
-//#include <gf_profiling.h>
-
-void free_memory(DoubleLinkList *head) {
-    DoubleLinkList *next = head;
-    while (next->next != NULL) {
-        DoubleLinkList *now = next;
-        next = next->next;
-        free(now);
-    }
-}
 
 
 int main(const int argc, char **argv) {
+	signal(SIGINT, handle_sigint);
+	signal(SIGTERM, handle_sigint);
     setlocale(LC_ALL, "");
+
     // TOKENIZING THE FILE AND CREATE A DOUBLE LINKED LIST
     if (argc < 2) {printf("Provide a file name."); return 1;}
     /*
@@ -41,10 +33,11 @@ int main(const int argc, char **argv) {
     size_t line_length = strlen_asm(token_buffer) - 2; // save without \0 and \n
     if (line_length > 200) {
         printf("Crossed the line length limit at line 0.");
+        moommap();
         return 2;
     }
     // currently copying the null-terminator into the strings, necessary?
-    DoubleLinkList *head = calloc(1, sizeof(DoubleLinkList) + 400); // 4 bytes per char, 100 line lenght
+    DoubleLinkList *head = calloc(1, sizeof(DoubleLinkList) + 200);
     head->line_length = line_length;
     DoubleLinkList *previous = head;
     DoubleLinkList *next;
@@ -54,9 +47,9 @@ int main(const int argc, char **argv) {
     int line_counter = 1;
     while (*token_buffer != '\0') {
         line_counter++;
-        if (*token_buffer == 10) {
+        if (*token_buffer == '\n') {
             // handle new line
-            if (*(token_buffer+2) != 10) {
+            if (*(token_buffer+2) != '\n') {
                 line_counter--;
                 if (*(token_buffer+2) == 0) line_counter++; // handle EOF
             }
@@ -65,6 +58,7 @@ int main(const int argc, char **argv) {
         if (line_length > 200) {
             printf("Crossed the line length limit at line %d.", line_counter);
             free_memory(head);
+            moommap();
             return 2;
         }
 
@@ -96,7 +90,7 @@ int main(const int argc, char **argv) {
     DoubleLinkList *top;
     top = head;
     Cursor cursor = {top, 0, 0, 0};
-    uint8 running = 1;
+    running = 1;
 
     // PROGRAM LOOP
     while (running == 1) {

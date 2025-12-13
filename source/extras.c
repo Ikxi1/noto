@@ -1,5 +1,8 @@
 #include <extras.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+volatile sig_atomic_t running = 1;
 
 const char scancode_lut[] = {
     0,0,0,0,0,0,0,0,0,0, // 0-9
@@ -23,9 +26,32 @@ const char scancode_lut[] = {
     L'´',L'µ',L'ö',0,0,0,0,0,L'ü',0 // 180-189
 };
 
+
 void move_cursor_eol(Cursor cursor) {
     while (cursor.text_col >= cursor.text_row->line_length) {
         cursor.text_col--;
         cursor.screen_col--;
+    }
+}
+
+
+void handle_sigint(int sig) {
+    running = 0;
+    printf("SIGINT\n");
+}
+
+
+void handle_sigterm(int sig) {
+    running = 0;
+    printf("SIGTERM\n");
+}
+
+
+void free_memory(DoubleLinkList *head) {
+    DoubleLinkList *next = head;
+    while (next->next != NULL) {
+        DoubleLinkList *now = next;
+        next = next->next;
+        free(now);
     }
 }
