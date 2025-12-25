@@ -264,7 +264,7 @@ int main(const int argc, char **argv) {
                 mvprintw(row-1, 0, "enter: %d", key);
                 break;
 
-            default:
+	    default: {
                 char c = scancode_lut[key];
                 if (c != 0) {
                     // add characters to line
@@ -273,17 +273,18 @@ int main(const int argc, char **argv) {
                         //if (i+1 >= 200) {
                         //    mvprintw(row-1, 0, "reached line length limit");
                         //    break;
-                        //}
+		        //}
                         //buf[0] = cursor.text_row->line[i+1];
-                        cursor.text_row->line[i+1] = cursor.text_row->line[i];
-                        i++;
+		      cursor.text_row->line[i+1] = cursor.text_row->line[i];
+		      i++;
                     }
                     cursor.text_row->line[cursor.text_col] = c;
                     cursor.text_row->line_length++;
-                    mvprintw(row-1, 0, "%lc", c);
+                    mvprintw(row-1, 0, "%lc", c );
                 }
                 else mvprintw(row-1, 0, "key: %d", key);
                 break;
+	    }
         }
     }
 
